@@ -3,6 +3,7 @@ package uniandes.algorithms.readsanalyzer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import ngsep.sequences.RawRead;
 
@@ -14,7 +15,7 @@ import ngsep.sequences.RawRead;
  */
 public class KmersTable implements RawReadProcessor {
 	private int kmerSize;
-	private Map<String, Integer> conteoKmer;
+	private Map<String, Integer> kmerCounts;
 
 	/**
 	 * Creates a new table with the given k-mer size
@@ -22,9 +23,8 @@ public class KmersTable implements RawReadProcessor {
 	 * @param kmerSize length of k-mers stored in this table
 	 */
 	public KmersTable(int kmerSize) {
-		// TODO: Implementar metodo
 		this.kmerSize = kmerSize;
-		conteoKmer = new HashMap<String, Integer>();
+		kmerCounts = new HashMap<String, Integer>();
 	}
 
 	/**
@@ -34,14 +34,10 @@ public class KmersTable implements RawReadProcessor {
 	 */
 	public void processRead(RawRead read) {
 		String sequence = read.getSequenceString();
-		// TODO Implementar metodo. Calcular todos los k-mers del tamanho dado en la
-		// constructora y actualizar la abundancia de cada k-mer
 		for (int i = 0; i <= sequence.length() - kmerSize; i++) {
 			String kmer = sequence.substring(i, i + kmerSize);
-			if (conteoKmer.containsKey(kmer))
-				conteoKmer.compute(kmer, (key, j) -> j + 1);
-			else
-				conteoKmer.put(kmer, 1);
+			kmerCounts.putIfAbsent(kmer, 0);
+			kmerCounts.compute(kmer, (key, j) -> j + 1);
 		}
 	}
 
@@ -51,8 +47,7 @@ public class KmersTable implements RawReadProcessor {
 	 * @return Set<String> set of k-mers
 	 */
 	public Set<String> getDistinctKmers() {
-		// TODO Implementar metodo
-		return conteoKmer.keySet();
+		return kmerCounts.keySet();
 	}
 
 	/**
@@ -62,8 +57,7 @@ public class KmersTable implements RawReadProcessor {
 	 * @return int times that the given k-mer have been extracted from given reads
 	 */
 	public int getAbundance(String kmer) {
-		// TODO Implementar metodo
-		return conteoKmer.get(kmer);
+		return kmerCounts.get(kmer);
 	}
 
 	/**
@@ -74,10 +68,9 @@ public class KmersTable implements RawReadProcessor {
 	 *         index. Position zero should be equal to zero
 	 */
 	public int[] calculateAbundancesDistribution() {
-		// TODO Implementar metodo
-		int max_length = conteoKmer.values().stream().max((a, b) -> a - b).get();
-		int[] ans = new int[max_length + 1];
-		conteoKmer.values().stream().forEach((conteo) -> ans[conteo]++);
+		Stream<Integer> stream = kmerCounts.values().stream();
+		int[] ans = new int[stream.max(Integer::compare).get() + 1];
+		stream.forEach(conteo -> ans[conteo]++);
 		return ans;
 	}
 }

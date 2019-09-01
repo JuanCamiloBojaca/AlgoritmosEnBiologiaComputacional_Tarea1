@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-
+import java.util.TreeSet;
 import ngsep.sequences.QualifiedSequence;
 import ngsep.sequences.QualifiedSequenceList;
 import ngsep.sequences.io.FastaSequencesHandler;
@@ -47,37 +47,57 @@ public class SimpleReadsSimulator {
 		String fixedQSStr = new String(fixedQS);
 		Random random = new Random();
 		double tasaCambios = Double.valueOf(args[4]);
-
-		char[] letras = new char[] { 'A', 'C', 'T', 'G' };
+		double tasaIndels = Double.valueOf(args[5]);
 
 		try (PrintStream out = new PrintStream(outFile)) {
-			// TODO: Generar lecturas aleatorias. Utilizar el objeto random para generar una
-			// posicion aleatoria de inicio
-			// en la cadena sequence. Extraer la lectura de tamanho readLength e imprimirla
-			// en formato fastq.
-			// Utilizar la cadena fixedQSStr para generar calidades fijas para el formato
 			for (int i = 0; i < numReads; i++) {
 				out.println("seq_" + (i + 1));
 				int pos = random.nextInt(seqLength - readLength);
-				String sub = sequence.substring(i, i + readLength);
+				String sub = sequence.substring(pos, pos + readLength);
 				
-				char[] array = sub.toCharArray();
-				Set<Integer> a = new HashSet<>();
-				for (int j = 0; j < array.length * tasaCambios; j++) {
-					int p = random.nextInt(array.length);
-					while (a.contains(p))
-						p = random.nextInt(array.length);
-					a.add(p);
-
-					char let = letras[random.nextInt(letras.length)];
-					while (let == array[p])
-						let = letras[random.nextInt(letras.length)];
-				}
-
-				out.println(new String(array));
+				sub = agregarIndels(random, tasaIndels, sub);
+				sub = agregarErrores(random, tasaCambios, sub);
+				out.println(sub);
 				out.println(fixedQSStr);
 			}
-
 		}
+	}
+
+	private static String agregarIndels(Random random, double tasaIndels, String sub) {
+		TreeSet<Integer> positions = new TreeSet<Integer>();
+		for (int j = 0; j < sub.length() * tasaIndels; j++) {
+			int p = random.nextInt(sub.length());
+			while (positions.contains(p))
+				p = random.nextInt(sub.length());
+			positions.add(p);
+		}
+		char[] ans = new char[sub.length() - positions.size()];
+		int l = 0, j = 0;
+		for (int skip : positions) {
+			while (l < skip)
+				ans[l++] = sub.charAt(j++);
+			j++;
+		}
+		while (j < sub.length())
+			ans[l++] = sub.charAt(j++);
+
+		return new String(ans);
+	}
+
+	private static String agregarErrores(Random random, double tasaCambios, String sub) {
+		char[] letras = new char[] { 'A', 'C', 'T', 'G' };
+		char[] array = sub.toCharArray();
+		Set<Integer> changedIndex = new HashSet<>();
+		for (int j = 0; j < array.length * tasaCambios; j++) {
+			int p = random.nextInt(array.length);
+			while (changedIndex.contains(p))
+				p = random.nextInt(array.length);
+			changedIndex.add(p);
+
+			char let = letras[random.nextInt(letras.length)];
+			while (let == array[p])
+				let = letras[random.nextInt(letras.length)];
+		}
+		return new String(array);
 	}
 }

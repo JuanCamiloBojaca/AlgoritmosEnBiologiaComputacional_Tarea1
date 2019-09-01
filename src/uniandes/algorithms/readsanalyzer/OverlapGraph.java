@@ -1,12 +1,16 @@
 package uniandes.algorithms.readsanalyzer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import ngsep.sequences.RawRead;
 
 /**
@@ -38,40 +42,22 @@ public class OverlapGraph implements RawReadProcessor {
 	 */
 	public void processRead(RawRead read) {
 		String sequence = read.getSequenceString();
-		// TODO: Paso 1. Agregar la secuencia al mapa de conteos si no existe.
-		// Si ya existe, solo se le suma 1 a su conteo correspondiente y no se deben
-		// ejecutar los pasos 2 y 3
 		if (readCounts.containsKey(sequence)) {
 			readCounts.compute(sequence, (key, i) -> i + 1);
 		} else {
 			readCounts.put(sequence, 1);
-
-			// TODO: Paso 2. Actualizar el mapa de sobrelapes con los sobrelapes en los que
-			// la secuencia nueva sea predecesora de una secuencia existente
-			// 2.1 Crear un ArrayList para guardar las secuencias que tengan como prefijo un
-			// sufijo de la nueva secuencia
-			ArrayList<ReadOverlap> lista = new ArrayList<>();
-			// 2.2 Recorrer las secuencias existentes para llenar este ArrayList creando los
-			// nuevos sobrelapes que se encuentren.
-			for (String seq : getDistinctSequences()) {
-				int sobrelape = getOverlapLength(sequence, seq);
-				if (sobrelape >= minOverlap)
-					lista.add(new ReadOverlap(sequence, seq, sobrelape));
+			ArrayList<ReadOverlap> sequenceOverlaps = new ArrayList<>();
+			for (String sequence2 : getDistinctSequences()) {
+				int overlap = getOverlapLength(sequence, sequence2);
+				if (overlap >= minOverlap)
+					sequenceOverlaps.add(new ReadOverlap(sequence, sequence2, overlap));
 			}
-			// 2.3 Después del recorrido para llenar la lista, agregar la nueva secuencia
-			// con su lista de sucesores al mapa de sobrelapes
-			overlaps.put(sequence, lista);
+			overlaps.put(sequence, sequenceOverlaps);
 
-			// TODO: Paso 3. Actualizar el mapa de sobrelapes con los sobrelapes en los que
-			// la secuencia nueva sea sucesora de una secuencia existente
-			// Recorrer el mapa de sobrelapes. Para cada secuencia existente que tenga como
-			// sufijo un prefijo de la nueva secuencia
-			// se agrega un nuevo sobrelape a la lista de sobrelapes de la secuencia
-			// existente
-			for (Entry<String, ArrayList<ReadOverlap>> a : overlaps.entrySet()) {
-				int sobrelape = getOverlapLength(a.getKey(), sequence);
-				if (sobrelape >= minOverlap)
-					a.getValue().add(new ReadOverlap(a.getKey(), sequence, sobrelape));
+			for (Entry<String, ArrayList<ReadOverlap>> entry : overlaps.entrySet()) {
+				int overlap = getOverlapLength(entry.getKey(), sequence);
+				if (overlap >= minOverlap)
+					entry.getValue().add(new ReadOverlap(entry.getKey(), sequence, overlap));
 			}
 
 		}
@@ -87,12 +73,11 @@ public class OverlapGraph implements RawReadProcessor {
 	 *         sequence 1
 	 */
 	private int getOverlapLength(String sequence1, String sequence2) {
-		for (int i = Math.min(sequence2.length(), sequence1.length()); i > 0; i--) {
-			String suffijo = sequence1.substring(sequence1.length() - i);
-			String prefijo = sequence2.substring(0, suffijo.length());
-
-			if (suffijo.equals(prefijo))
-				return suffijo.length();
+		ext: for (int length = Math.min(sequence2.length(), sequence1.length()); length > 0; length--) {
+			for (int i = sequence1.length() - length, j = 0; j < sequence2.length(); i++, j++)
+				if (sequence1.charAt(i) != sequence2.charAt(j))
+					continue ext;
+			return length;
 		}
 		return 0;
 	}
@@ -113,7 +98,6 @@ public class OverlapGraph implements RawReadProcessor {
 	 * @return int Times that the given sequence has been added to this graph
 	 */
 	public int getSequenceAbundance(String sequence) {
-		// TODO: Implementar metodo
 		return readCounts.get(sequence);
 	}
 
@@ -125,11 +109,9 @@ public class OverlapGraph implements RawReadProcessor {
 	 *         index. Position zero should be equal to zero
 	 */
 	public int[] calculateAbundancesDistribution() {
-		// TODO: Implementar metodo
-		int max = readCounts.values().stream().max((Integer i, Integer j) -> i - j).get();
-		int[] ans = new int[max + 1];
-		for (int conteo : readCounts.values())
-			ans[conteo]++;
+		Stream<Integer> stream = readCounts.values().stream();
+		int[] ans = new int[stream.max(Integer::compare).get() + 1];
+		stream.forEach(conteo -> ans[conteo]++);
 		return ans;
 	}
 
@@ -141,11 +123,9 @@ public class OverlapGraph implements RawReadProcessor {
 	 *         corresponding array index.
 	 */
 	public int[] calculateOverlapDistribution() {
-		// TODO: Implementar metodo
-		int max_length = overlaps.values().stream().max((a, b) -> a.size() - b.size()).get().size();
-		int[] sucesores = new int[max_length + 1];
-		overlaps.values().stream().mapToInt((array) -> array.size())
-				.forEach((numero_sucesores) -> sucesores[numero_sucesores]++);
+		Stream<Integer> stream = overlaps.values().stream().map((array) -> array.size());
+		int[] sucesores = new int[stream.max(Integer::compare).get() + 1];
+		stream.forEach((numero_sucesores) -> sucesores[numero_sucesores]++);
 		return sucesores;
 	}
 
@@ -156,19 +136,14 @@ public class OverlapGraph implements RawReadProcessor {
 	 *         subsequence in the assembly
 	 */
 	public String getSourceSequence() {
-		// TODO Implementar metodo recorriendo las secuencias existentes y buscando una
-		// secuencia que no tenga predecesores
-		Map<String, Integer> numeroPredecesores = new HashMap<String, Integer>();
-		for (ArrayList<ReadOverlap> list : overlaps.values()) {
-			for (ReadOverlap sobrelape : list) {
-				String act = sobrelape.getDestSequence();
-				if (numeroPredecesores.containsKey(act)) {
-					numeroPredecesores.compute(act, (key, i) -> i + 1);
-				} else
-					numeroPredecesores.put(act, 1);
-			}
-		}
-		return numeroPredecesores.entrySet().stream().min((a, b) -> a.getValue() - b.getValue()).get().getKey();
+		return overlaps.values().stream()
+				.flatMap(Collection::stream) // Aggregate sub lists to one stream
+				.collect(Collectors.groupingBy(
+						ReadOverlap::getDestSequence, // group by destSequence 
+						Collectors.counting())) // count
+				.entrySet().stream()
+				.min((a, b) -> (int) (a.getValue() - b.getValue())) // Minimum count
+				.get().getKey(); // Get String
 	}
 
 	/**
@@ -181,21 +156,11 @@ public class OverlapGraph implements RawReadProcessor {
 	public ArrayList<ReadOverlap> getLayoutPath() {
 		ArrayList<ReadOverlap> layout = new ArrayList<>();
 		HashSet<String> visitedSequences = new HashSet<>();
-		// TODO Implementar metodo. Comenzar por la secuencia fuente que calcula el
-		// método anterior
-
-		// Luego, hacer un ciclo en el que en cada paso se busca la secuencia no
-		// visitada que tenga mayor sobrelape con la secuencia actual.
-		// Agregar el sobrelape a la lista de respuesta y la secuencia destino al
-		// conjunto de secuencias visitadas. Parar cuando no se encuentre una secuencia
-		// nueva
-
 		String act = getSourceSequence();
-
 		while (true) {
 			visitedSequences.add(act);
 			Optional<ReadOverlap> next = overlaps.get(act).stream()
-					.filter((a) -> !visitedSequences.contains(a.getDestSequence()))
+					.filter(a -> !visitedSequences.contains(a.getDestSequence()))
 					.max((a, b) -> a.getOverlap() - b.getOverlap());
 			if (next.isPresent()) {
 				act = next.get().getDestSequence();
@@ -203,7 +168,6 @@ public class OverlapGraph implements RawReadProcessor {
 			} else
 				break;
 		}
-
 		return layout;
 	}
 
@@ -215,13 +179,9 @@ public class OverlapGraph implements RawReadProcessor {
 	public String getAssembly() {
 		ArrayList<ReadOverlap> layout = getLayoutPath();
 		StringBuilder assembly = new StringBuilder();
-		// TODO Recorrer el layout y ensamblar la secuencia agregando al objeto assembly
-		// las bases adicionales que aporta la región de cada secuencia destino que
-		// está a la derecha del sobrelape
 		assembly.append(layout.get(0).getSourceSequence());
 		for (ReadOverlap r_layout : layout)
 			assembly.append(r_layout.getDestSequence().substring(r_layout.getOverlap()));
-
 		return assembly.toString();
 	}
 
