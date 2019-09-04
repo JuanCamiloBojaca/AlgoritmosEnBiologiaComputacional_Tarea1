@@ -59,7 +59,7 @@ public class OverlapGraph implements RawReadProcessor {
 				if (overlap >= minOverlap)
 					entry.getValue().add(new ReadOverlap(entry.getKey(), sequence, overlap));
 			}
-
+			
 		}
 	}
 
@@ -74,6 +74,7 @@ public class OverlapGraph implements RawReadProcessor {
 	 */
 	private int getOverlapLength(String sequence1, String sequence2) {
 		ext: for (int length = Math.min(sequence2.length(), sequence1.length()); length > 0; length--) {
+			
 			for (int i = sequence1.length() - length, j = 0; j < sequence2.length(); i++, j++)
 				if (sequence1.charAt(i) != sequence2.charAt(j))
 					continue ext;
@@ -110,9 +111,9 @@ public class OverlapGraph implements RawReadProcessor {
 	 */
 	public int[] calculateAbundancesDistribution() {
 		Stream<Integer> stream = readCounts.values().stream();
-		int[] ans = new int[stream.max(Integer::compare).get() + 1];
-		stream.forEach(conteo -> ans[conteo]++);
-		return ans;
+		int[] abundancias = new int[stream.max(Integer::compare).get() + 1];
+		stream.forEach(conteo -> abundancias[conteo]++);
+		return abundancias;
 	}
 
 	/**
@@ -138,11 +139,9 @@ public class OverlapGraph implements RawReadProcessor {
 	public String getSourceSequence() {
 		return overlaps.values().stream()
 				.flatMap(Collection::stream) // Aggregate sub lists to one stream
-				.collect(Collectors.groupingBy(
-						ReadOverlap::getDestSequence, // group by destSequence 
-						Collectors.counting())) // count
+				.collect(Collectors.groupingBy(ReadOverlap::getDestSequence))// group by destSequence 
 				.entrySet().stream()
-				.min((a, b) -> (int) (a.getValue() - b.getValue())) // Minimum count
+				.min((a, b) -> a.getValue().size() - b.getValue().size()) // Minimum count
 				.get().getKey(); // Get String
 	}
 
