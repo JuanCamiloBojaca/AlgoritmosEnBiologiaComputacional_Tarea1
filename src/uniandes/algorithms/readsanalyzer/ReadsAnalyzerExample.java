@@ -79,7 +79,7 @@ public class ReadsAnalyzerExample {
 			
 			//Calculate statistics
 			Set<String> kmers = kmersTable.getDistinctKmers();
-			System.out.println("Total number of k-mers: "+kmers.size());
+			System.out.println("Total number of k-mers: "+kmers);
 			for(String kmer:kmers) System.out.println("The k-mer "+kmer+" is present "+kmersTable.getAbundance(kmer)+" times");
 			System.out.println("K-mer distribution");
 			int [] distribution = kmersTable.calculateAbundancesDistribution();

@@ -68,9 +68,8 @@ public class KmersTable implements RawReadProcessor {
 	 *         index. Position zero should be equal to zero
 	 */
 	public int[] calculateAbundancesDistribution() {
-		Stream<Integer> stream = kmerCounts.values().stream();
-		int[] ans = new int[stream.max(Integer::compare).get() + 1];
-		stream.forEach(conteo -> ans[conteo]++);
+		int[] ans = new int[kmerCounts.values().stream().max(Integer::compare).get() + 1];
+		kmerCounts.values().stream().forEach(conteo -> ans[conteo]++);
 		return ans;
 	}
 }

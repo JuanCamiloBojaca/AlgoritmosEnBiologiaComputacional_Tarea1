@@ -51,14 +51,15 @@ public class SimpleReadsSimulator {
 
 		try (PrintStream out = new PrintStream(outFile)) {
 			for (int i = 0; i < numReads; i++) {
-				out.println("seq_" + (i + 1));
+				out.println(">" +seq.getName()+" " + seq.getComments());
 				int pos = random.nextInt(seqLength - readLength + 1);
 				String sub = sequence.substring(pos, pos + readLength);
 				
 				sub = agregarIndels(random, tasaIndels, sub);
 				sub = agregarErrores(random, tasaCambios, sub);
-				out.println(sub+"+");
-				out.println(fixedQSStr);
+				out.println(sub);
+				/**out.println("+");
+				out.println(fixedQSStr);*/
 			}
 		}
 	}
