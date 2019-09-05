@@ -75,9 +75,14 @@ public class OverlapGraph implements RawReadProcessor {
 	private int getOverlapLength(String sequence1, String sequence2) {
 		ext: for (int length = Math.min(sequence2.length(), sequence1.length()); length > 0; length--) {
 			
-			for (int i = sequence1.length() - length, j = 0; j < sequence2.length(); i++, j++)
+			for (int i = sequence1.length() - length, j = 0; i < sequence1.length(); i++, j++) {
+				sequence1.charAt(i);
+				sequence2.charAt(j);
 				if (sequence1.charAt(i) != sequence2.charAt(j))
 					continue ext;
+			}
+				
+				
 			return length;
 		}
 		return 0;
@@ -110,9 +115,8 @@ public class OverlapGraph implements RawReadProcessor {
 	 *         index. Position zero should be equal to zero
 	 */
 	public int[] calculateAbundancesDistribution() {
-		Stream<Integer> stream = readCounts.values().stream();
-		int[] abundancias = new int[stream.max(Integer::compare).get() + 1];
-		stream.forEach(conteo -> abundancias[conteo]++);
+		int[] abundancias = new int[readCounts.values().stream().max(Integer::compare).get() + 1];
+		 readCounts.values().stream().forEach(conteo -> abundancias[conteo]++);
 		return abundancias;
 	}
 
@@ -124,9 +128,8 @@ public class OverlapGraph implements RawReadProcessor {
 	 *         corresponding array index.
 	 */
 	public int[] calculateOverlapDistribution() {
-		Stream<Integer> stream = overlaps.values().stream().map((array) -> array.size());
-		int[] sucesores = new int[stream.max(Integer::compare).get() + 1];
-		stream.forEach((numero_sucesores) -> sucesores[numero_sucesores]++);
+		int[] sucesores = new int[ overlaps.values().stream().map((array) -> array.size()).max(Integer::compare).get() + 1];
+		 overlaps.values().stream().map((array) -> array.size()).forEach((numero_sucesores) -> sucesores[numero_sucesores]++);
 		return sucesores;
 	}
 
