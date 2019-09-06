@@ -50,17 +50,18 @@ public class SimpleReadsSimulator {
 		double tasaIndels = Double.valueOf(args[5]);
 
 		try (PrintStream out = new PrintStream(outFile)) {
-			out.println(">" +seq.getName()+" " + seq.getComments());
+
 			for (int i = 0; i < numReads; i++) {
-				
+
 				int pos = random.nextInt(seqLength - readLength + 1);
 				String sub = sequence.substring(pos, pos + readLength);
-				
+
 				sub = agregarIndels(random, tasaIndels, sub);
 				sub = agregarErrores(random, tasaCambios, sub);
+
+				out.println(">" + seq.getName() + "_" + i + " " + seq.getComments());
 				out.println(sub);
-				/**out.println("+");
-				out.println(fixedQSStr);*/
+				out.println(fixedQSStr);
 			}
 		}
 	}
@@ -76,7 +77,7 @@ public class SimpleReadsSimulator {
 		char[] ans = new char[sub.length() - positions.size()];
 		int l = 0, j = 0;
 		for (int skip : positions) {
-			while (l < skip)
+			while (j < skip)
 				ans[l++] = sub.charAt(j++);
 			j++;
 		}
