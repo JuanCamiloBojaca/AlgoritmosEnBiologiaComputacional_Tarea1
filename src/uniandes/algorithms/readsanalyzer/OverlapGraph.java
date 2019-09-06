@@ -9,8 +9,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import ngsep.sequences.RawRead;
 
 /**
@@ -160,6 +158,7 @@ public class OverlapGraph implements RawReadProcessor {
 		HashSet<String> visitedSequences = new HashSet<>();
 		String act = getSourceSequence();
 		while (true) {
+			System.out.println("--------------");
 			visitedSequences.add(act);
 			Optional<ReadOverlap> next = overlaps.get(act).stream()
 					.filter(a -> !visitedSequences.contains(a.getDestSequence()))

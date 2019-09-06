@@ -3,8 +3,6 @@ package uniandes.algorithms.readsanalyzer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
-
 import ngsep.sequences.RawRead;
 
 /**
