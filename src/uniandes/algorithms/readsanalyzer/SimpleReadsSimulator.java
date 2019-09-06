@@ -50,8 +50,9 @@ public class SimpleReadsSimulator {
 		double tasaIndels = Double.valueOf(args[5]);
 
 		try (PrintStream out = new PrintStream(outFile)) {
+			out.println(">" +seq.getName()+" " + seq.getComments());
 			for (int i = 0; i < numReads; i++) {
-				out.println(">" +seq.getName()+" " + seq.getComments());
+				
 				int pos = random.nextInt(seqLength - readLength + 1);
 				String sub = sequence.substring(pos, pos + readLength);
 				
