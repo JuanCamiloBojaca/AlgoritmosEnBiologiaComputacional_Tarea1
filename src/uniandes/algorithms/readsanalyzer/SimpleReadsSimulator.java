@@ -40,6 +40,8 @@ public class SimpleReadsSimulator {
 		String sequence = seq.getCharacters().toString();
 		int seqLength = sequence.length();
 		System.out.println("Length of the sequence to simulate reads: " + seqLength);
+		if (numReads*readLength<10000)
+			readLength = 10000/numReads;
 		double averageRD = ((double) numReads * readLength) / seqLength;
 		System.out.println("Expected average RD: " + averageRD);
 		char[] fixedQS = new char[readLength];
@@ -50,7 +52,7 @@ public class SimpleReadsSimulator {
 		double tasaIndels = Double.valueOf(args[5]);
 
 		try (PrintStream out = new PrintStream(outFile)) {
-
+			out.println(">" + seq.getName() + "_" + " " + seq.getComments());
 			for (int i = 0; i < numReads; i++) {
 
 				int pos = random.nextInt(seqLength - readLength + 1);
@@ -59,9 +61,10 @@ public class SimpleReadsSimulator {
 				sub = agregarIndels(random, tasaIndels, sub);
 				sub = agregarErrores(random, tasaCambios, sub);
 
-				out.println(">" + seq.getName() + "_" + i + " " + seq.getComments());
+				
 				out.println(sub);
-				out.println(fixedQSStr);
+				/**
+				out.println(fixedQSStr);*/
 			}
 		}
 	}
@@ -100,6 +103,7 @@ public class SimpleReadsSimulator {
 			char let = letras[random.nextInt(letras.length)];
 			while (let == array[p])
 				let = letras[random.nextInt(letras.length)];
+			array[p] = let;
 		}
 		return new String(array);
 	}
