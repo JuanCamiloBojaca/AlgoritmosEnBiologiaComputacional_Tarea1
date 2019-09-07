@@ -158,7 +158,6 @@ public class OverlapGraph implements RawReadProcessor {
 		HashSet<String> visitedSequences = new HashSet<>();
 		String act = getSourceSequence();
 		while (true) {
-			System.out.println("--------------");
 			visitedSequences.add(act);
 			Optional<ReadOverlap> next = overlaps.get(act).stream()
 					.filter(a -> !visitedSequences.contains(a.getDestSequence()))
